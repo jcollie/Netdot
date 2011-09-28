@@ -122,7 +122,7 @@ if ( $report_type eq 'product' || $report_type eq 'product_monitored' ){
     LEFT JOIN  site ON site.id=device.site
     LEFT JOIN  (product CROSS JOIN entity CROSS JOIN producttype) 
                  ON product.id=device.product 
-                  AND producttype.id=product.id
+                  AND producttype.id=product.type
                   AND entity.id=product.manufacturer 
     GROUP BY   site,producttype.name,product
     ORDER BY   site_name,producttype.name,product_name
@@ -220,7 +220,12 @@ if ( $report_type eq 'product' || $report_type eq 'product_monitored' ){
 	    foreach my $os ( keys %{$t{$m}{product}{$prod}{os}} ){
 		my @row = ();
 		push( @row, " ", " " );
-		push( @row, "<a href=\"../generic/search_obj.html?table=Device&product=$prod&os=$os&res=1\">" . $os . '</a>' );
+		my $class = " ";
+		if ( $latest_os && ($os ne $latest_os) ){
+		    $class = 'warn';
+		}
+		push( @row, "<a class=\"$class\" href=\"../generic/search_obj.html?table=Device&product=$prod&os=$os&res=1\">" . 
+		      $os . '</a>' );
 		push( @row, $t{$m}{product}{$prod}{os}{$os}{total} );
 		push( @rows, \@row );
 	    }
@@ -251,6 +256,7 @@ if ( $report_type eq 'product' || $report_type eq 'product_monitored' ){
 	my $devid = $dev->id;
 	$t{$manuf}{total}++;
 	$t{$manuf}{product}{$prod}{total}++;
+	$t{$manuf}{product}{$prod}{latest} = $dev->product->latest_os;
 	$t{$manuf}{product}{$prod}{os}{$os}{dev}{$devid}{total}++;
     }
 
@@ -274,7 +280,7 @@ if ( $report_type eq 'product' || $report_type eq 'product_monitored' ){
 	    }else{
 		push( @row, $prod );
 	    }
-	    push( @row, " ", " " );
+	    push( @row, " ", $t{$m}{product}{$prod}{latest} );
 	    push( @rows, \@row );
 	    foreach my $os (keys %{$t{$m}{product}{$prod}{os}} ){
 		foreach my $devid (keys %{$t{$m}{product}{$prod}{os}{$os}{dev}} ){
